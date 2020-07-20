@@ -13,12 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Proxy;
-import com.pastdev.jsch.DefaultSessionFactory;
-import com.pastdev.jsch.SessionFactory;
-import com.pastdev.jsch.SessionFactory.SessionFactoryBuilder;
 import com.pastdev.jsch.command.CommandRunner;
 
 
@@ -45,31 +39,6 @@ public abstract class AbstractSshFileSystem extends FileSystem {
         if ( environment.containsKey( binDirKey ) ) {
             binDir = (String) environment.get( binDirKey );
         }
-
-        // Construct a new sessionFactory from the URI authority, path, and
-        // optional environment proxy
-        SessionFactory defaultSessionFactory = (SessionFactory) environment.get( "defaultSessionFactory" );
-        if ( defaultSessionFactory == null ) {
-            defaultSessionFactory = new DefaultSessionFactory();
-        }
-        SessionFactoryBuilder builder = defaultSessionFactory.newSessionFactoryBuilder();
-        String username = uri.getUserInfo();
-        if ( username != null ) {
-            builder.setUsername( username );
-        }
-        String hostname = uri.getHost();
-        if ( hostname != null ) {
-            builder.setHostname( hostname );
-        }
-        int port = uri.getPort();
-        if ( port != -1 ) {
-            builder.setPort( port );
-        }
-        Proxy proxy = (Proxy) environment.get( "proxy" );
-        if ( proxy != null ) {
-            builder.setProxy( proxy );
-        }
-        this.commandRunner = new CommandRunner( builder.build() );
     }
 
     String getCommand( String command ) {
@@ -99,7 +68,7 @@ public abstract class AbstractSshFileSystem extends FileSystem {
             try {
                 execute = commandRunner.execute( "uname -s" );
             }
-            catch ( JSchException | IOException e ) {
+            catch ( IOException e ) {
                 return Variant.GNU;
             }
 

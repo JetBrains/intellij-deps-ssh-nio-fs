@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import com.jcraft.jsch.JSchException;
 import com.pastdev.jsch.command.CommandRunner;
 import com.pastdev.jsch.command.CommandRunner.ChannelExecWrapper;
 
@@ -78,9 +77,6 @@ public class UnixSshPathINotifyWatchKey extends UnixSshPathWatchKey {
                     event( line );
                 }
             }
-        }
-        catch ( JSchException e ) {
-            logger.debug( "watch service failed: ", e.getMessage() );
         }
         catch ( IOException e ) {
             logger.debug( "watch service failed: ", e.getMessage() );

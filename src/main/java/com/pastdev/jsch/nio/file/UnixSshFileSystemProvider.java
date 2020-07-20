@@ -50,8 +50,6 @@ import java.util.Map;
 import java.util.Set;
 
 
-import com.jcraft.jsch.JSchException;
-import com.pastdev.jsch.command.CommandRunner;
 import com.pastdev.jsch.command.CommandRunner.ChannelExecWrapper;
 import com.pastdev.jsch.command.CommandRunner.ExecuteResult;
 import org.slf4j.Logger;
@@ -233,13 +231,7 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
     }
 
     private ExecuteResult execute( UnixSshPath path, String command ) throws IOException {
-        CommandRunner commandRunner = path.getFileSystem().getCommandRunner();
-        try {
-            return commandRunner.execute( command );
-        }
-        catch ( JSchException e ) {
-            throw new IOException( e );
-        }
+        return path.getFileSystem().getCommandRunner().execute(command);
     }
 
     private String executeForStdout( UnixSshPath path, String command ) throws IOException {
@@ -364,29 +356,24 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
     @Override
     public InputStream newInputStream( Path path, OpenOption... openOptions ) throws IOException {
         UnixSshPath unixPath = checkPath( path ).toAbsolutePath();
-        try {
-            final ChannelExecWrapper channel = unixPath.getFileSystem()
-                    .getCommandRunner()
-                    .open( unixPath.getFileSystem().getCommand( "cat" )
-                            + " " + unixPath.toAbsolutePath().quotedString() );
-            return new InputStream() {
-                private InputStream inputStream = channel.getInputStream();
+        final ChannelExecWrapper channel = unixPath.getFileSystem()
+                .getCommandRunner()
+                .open( unixPath.getFileSystem().getCommand( "cat" )
+                        + " " + unixPath.toAbsolutePath().quotedString() );
+        return new InputStream() {
+            private InputStream inputStream = channel.getInputStream();
 
-                @Override
-                public void close() throws IOException {
-                    int exitCode = channel.close();
-                    logger.debug( "cat exited with {}", exitCode );
-                }
+            @Override
+            public void close() throws IOException {
+                int exitCode = channel.close();
+                logger.debug( "cat exited with {}", exitCode );
+            }
 
-                @Override
-                public int read() throws IOException {
-                    return inputStream.read();
-                }
-            };
-        }
-        catch ( JSchException e ) {
-            throw new IOException( e );
-        }
+            @Override
+            public int read() throws IOException {
+                return inputStream.read();
+            }
+        };
     }
 
     @Override
@@ -434,66 +421,56 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
             }
         }
 
-        try {
 
-            StringBuilder commandBuilder = new StringBuilder( unixPath.getFileSystem().getCommand( "cat" ) )
-                    .append( " " );
-            if ( options.contains( StandardOpenOption.APPEND )
-                    && !options.contains( StandardOpenOption.TRUNCATE_EXISTING ) ) {
-                commandBuilder.append( ">> " );
-            }
-            else {
-                commandBuilder.append( "> " );
-            }
-            commandBuilder.append( unixPath.toAbsolutePath().quotedString() );
-
-            final ChannelExecWrapper channel = unixPath.getFileSystem()
-                    .getCommandRunner().open( commandBuilder.toString() );
-            return new OutputStream() {
-                private OutputStream outputStream = channel.getOutputStream();
-
-                @Override
-                public void close() throws IOException {
-                    int exitCode = channel.close();
-                    logger.debug( "cat exited with {}", exitCode );
-                }
-
-                @Override
-                public void write( int b ) throws IOException {
-                    outputStream.write( b );
-                }
-            };
+        StringBuilder commandBuilder = new StringBuilder( unixPath.getFileSystem().getCommand( "cat" ) )
+                .append( " " );
+        if ( options.contains( StandardOpenOption.APPEND )
+                && !options.contains( StandardOpenOption.TRUNCATE_EXISTING ) ) {
+            commandBuilder.append( ">> " );
         }
-        catch ( JSchException e ) {
-            throw new IOException( e );
+        else {
+            commandBuilder.append( "> " );
         }
+        commandBuilder.append( unixPath.toAbsolutePath().quotedString() );
+
+        final ChannelExecWrapper channel = unixPath.getFileSystem()
+                .getCommandRunner().open( commandBuilder.toString() );
+        return new OutputStream() {
+            private OutputStream outputStream = channel.getOutputStream();
+
+            @Override
+            public void close() throws IOException {
+                int exitCode = channel.close();
+                logger.debug( "cat exited with {}", exitCode );
+            }
+
+            @Override
+            public void write( int b ) throws IOException {
+                outputStream.write( b );
+            }
+        };
     }
 
     int read( UnixSshPath path, long startIndex, ByteBuffer bytes ) throws IOException {
-        try {
-            int read = 0;
-            ChannelExecWrapper sshChannel = path.getFileSystem().getCommandRunner().open(
-                    path.getFileSystem().getCommand( "dd" )
-                            + " bs=1 skip=" + startIndex + " if=" 
-                            + path.toAbsolutePath().quotedString() + " 2> /dev/null");
-            try (InputStream in = sshChannel.getInputStream()) {
-                ReadableByteChannel inChannel = Channels.newChannel( in );
-                int localRead;
-                while (bytes.hasRemaining() && (localRead = inChannel.read( bytes )) > 0) {
-                    read += localRead;
-                }
+        int read = 0;
+        ChannelExecWrapper sshChannel = path.getFileSystem().getCommandRunner().open(
+                path.getFileSystem().getCommand( "dd" )
+                        + " bs=1 skip=" + startIndex + " if="
+                        + path.toAbsolutePath().quotedString() + " 2> /dev/null");
+        try (InputStream in = sshChannel.getInputStream()) {
+            ReadableByteChannel inChannel = Channels.newChannel( in );
+            int localRead;
+            while (bytes.hasRemaining() && (localRead = inChannel.read( bytes )) > 0) {
+                read += localRead;
             }
-            finally {
-                int exitCode = sshChannel.close();
-                if ( exitCode != 0 ) {
-                    throw new IOException( "dd failed " + exitCode );
-                }
+        }
+        finally {
+            int exitCode = sshChannel.close();
+            if ( exitCode != 0 ) {
+                throw new IOException( "dd failed " + exitCode );
             }
-            return read;
         }
-        catch ( JSchException e ) {
-            throw new IOException( e );
-        }
+        return read;
     }
 
     @Override
@@ -707,40 +684,35 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
     }
 
     int write( UnixSshPath path, long startIndex, ByteBuffer bytes ) throws IOException {
-        try {
-            int bytesPosition = bytes.position();
-            // TODO cache this buffer for reuse
-            ByteBuffer temp = ByteBuffer.allocateDirect( bytes.limit() - bytesPosition );
-            temp.put( bytes );
-            bytes.position( bytesPosition );
+        int bytesPosition = bytes.position();
+        // TODO cache this buffer for reuse
+        ByteBuffer temp = ByteBuffer.allocateDirect( bytes.limit() - bytesPosition );
+        temp.put( bytes );
+        bytes.position( bytesPosition );
 
-            String command = path.getFileSystem().getCommand( "dd" )
-                    + " conv=notrunc bs=1 seek=" + startIndex 
-                    + " of=" + path.toAbsolutePath().quotedString();
-            ChannelExecWrapper sshChannel = null;
-            int written = 0;
-            try {
-                sshChannel = path.getFileSystem().getCommandRunner().open( command );
-                try (OutputStream out = sshChannel.getOutputStream()) {
-                    WritableByteChannel outChannel = Channels.newChannel( out );
-                    temp.flip();
-                    written = outChannel.write( temp );
-                }
-                if ( written > 0 ) {
-                    bytes.position( bytesPosition + written );
-                }
+        String command = path.getFileSystem().getCommand( "dd" )
+                + " conv=notrunc bs=1 seek=" + startIndex
+                + " of=" + path.toAbsolutePath().quotedString();
+        ChannelExecWrapper sshChannel = null;
+        int written = 0;
+        try {
+            sshChannel = path.getFileSystem().getCommandRunner().open( command );
+            try (OutputStream out = sshChannel.getOutputStream()) {
+                WritableByteChannel outChannel = Channels.newChannel( out );
+                temp.flip();
+                written = outChannel.write( temp );
             }
-            finally {
-                int exitCode = sshChannel.close();
-                if ( exitCode != 0 ) {
-                    throw new IOException( "dd failed " + exitCode );
-                }
+            if ( written > 0 ) {
+                bytes.position( bytesPosition + written );
             }
-            return written;
         }
-        catch ( JSchException e ) {
-            throw new IOException( e );
+        finally {
+            int exitCode = sshChannel.close();
+            if ( exitCode != 0 ) {
+                throw new IOException( "dd failed " + exitCode );
+            }
         }
+        return written;
     }
 
     private class BasicFileAttributesImpl implements BasicFileAttributes {

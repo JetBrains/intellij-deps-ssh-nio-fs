@@ -3,7 +3,6 @@ package com.pastdev.jsch.nio.file;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
@@ -14,36 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 
-
-
-
-
-
-
-
-
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-
-
-
-
-
-
-
-
-
-
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.SftpATTRS;
-import com.jcraft.jsch.SftpException;
-import com.pastdev.jsch.sftp.SftpRunner.Sftp;
-
 
 public class UnixSshSftpHybridFileSystemProvider extends UnixSshFileSystemProvider {
     private static final Logger logger = LoggerFactory.getLogger( UnixSshSftpHybridFileSystemProvider.class );
@@ -77,48 +48,47 @@ public class UnixSshSftpHybridFileSystemProvider extends UnixSshFileSystemProvid
         }
         final int permissionsAsInt = permissions == null ? -1 : toInt( permissions );
 
-        try {
-            logger.debug( "Getting sftpRunner to execute sftp createDirectory" );
-            ((UnixSshSftpHybridFileSystem)unixPath.getFileSystem()).getSftpRunner().execute( new Sftp() {
-                @Override
-                public void run( ChannelSftp sftp ) throws IOException {
-                    final String abspath = unixPath.toAbsolutePath().toString();
+        logger.debug( "Getting sftpRunner to execute sftp createDirectory" );
 
-                    SftpATTRS stat = null;
+        /*
+        ((UnixSshSftpHybridFileSystem)unixPath.getFileSystem()).getSftpRunner().execute( new Sftp() {
+            @Override
+            public void run( ChannelSftp sftp ) throws IOException {
+                final String abspath = unixPath.toAbsolutePath().toString();
+
+                SftpATTRS stat = null;
+                try {
+                    stat = sftp.lstat( abspath );
+                }
+                catch ( SftpException e ) {
+                }
+
+                if ( stat != null && stat.isDir() ) {
+                    throw new FileAlreadyExistsException( "Directory " + unixPath + " already exists" );
+                }
+
+                if ( stat == null || !stat.isDir() ) {
                     try {
-                        stat = sftp.lstat( abspath );
+                        sftp.mkdir( abspath );
                     }
                     catch ( SftpException e ) {
+                        throw new IOException( "Could not create directory", e );
                     }
-
-                    if ( stat != null && stat.isDir() ) {
-                        throw new FileAlreadyExistsException( "Directory " + unixPath + " already exists" );
-                    }
-
-                    if ( stat == null || !stat.isDir() ) {
-                        try {
-                            sftp.mkdir( abspath );
-                        }
-                        catch ( SftpException e ) {
-                            throw new IOException( "Could not create directory", e );
-                        }
-                    }
-
-                    if ( permissionsAsInt >= 0 ) {
-                        try {
-                            sftp.chmod( permissionsAsInt, abspath );
-                        }
-                        catch ( SftpException e ) {
-                            throw new IOException( "Could change permission on created directory", e );
-                        }
-                    }
-
                 }
-            } );
-        }
-        catch ( JSchException e ) {
-            throw new IOException( e );
-        }
+
+                if ( permissionsAsInt >= 0 ) {
+                    try {
+                        sftp.chmod( permissionsAsInt, abspath );
+                    }
+                    catch ( SftpException e ) {
+                        throw new IOException( "Could change permission on created directory", e );
+                    }
+                }
+            }
+        } );
+        */
+
+        throw new UnsupportedOperationException();
     }
 
     @Override

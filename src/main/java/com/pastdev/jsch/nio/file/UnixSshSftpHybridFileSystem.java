@@ -17,9 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import com.jcraft.jsch.Proxy;
-import com.pastdev.jsch.SessionFactory;
-import com.pastdev.jsch.SessionFactory.SessionFactoryBuilder;
 import com.pastdev.jsch.sftp.SftpRunner;
 
 
@@ -34,32 +31,7 @@ public class UnixSshSftpHybridFileSystem extends UnixSshFileSystem {
     public UnixSshSftpHybridFileSystem( UnixSshFileSystemProvider provider, URI uri, Map<String, ?> environment ) throws IOException {
         super( provider, uri, environment );
 
-        // Construct a new sessionFactory from the URI authority, path, and
-        // optional environment proxy
-        SessionFactory defaultSessionFactory = (SessionFactory) environment.get( "defaultSessionFactory" );
-        if ( defaultSessionFactory == null ) {
-            throw new IllegalArgumentException( "defaultSessionFactory environment parameter is required" );
-        }
-        SessionFactoryBuilder builder = defaultSessionFactory.newSessionFactoryBuilder();
-        String username = uri.getUserInfo();
-        if ( username != null ) {
-            builder.setUsername( username );
-        }
-        String hostname = uri.getHost();
-        if ( hostname != null ) {
-            builder.setHostname( hostname );
-        }
-        int port = uri.getPort();
-        if ( port != -1 ) {
-            builder.setPort( port );
-        }
-        Proxy proxy = (Proxy) environment.get( "proxy" );
-        if ( proxy != null ) {
-            builder.setProxy( proxy );
-        }
         logger.debug( "Building SftpRunner" );
-        this.sftpRunner = new SftpRunner( builder.build() );
-
         this.defaultDirectory = new UnixSshPath( this, uri.getPath() );
         if ( !defaultDirectory.isAbsolute() ) {
             throw new RuntimeException( "default directory must be absolute" );
@@ -84,6 +56,10 @@ public class UnixSshSftpHybridFileSystem extends UnixSshFileSystem {
                     .append( part );
         }
         return new UnixSshPath( this, builder.toString() );
+    }
+
+    public void setSftpRunner(SftpRunner sftpRunner) {
+        this.sftpRunner = sftpRunner;
     }
 
     public SftpRunner getSftpRunner() {

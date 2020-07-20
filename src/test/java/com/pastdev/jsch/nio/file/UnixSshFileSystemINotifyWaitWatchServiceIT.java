@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import com.jcraft.jsch.JSchException;
 import com.pastdev.jsch.IOUtils;
 
 
@@ -59,7 +58,7 @@ public class UnixSshFileSystemINotifyWaitWatchServiceIT extends FileSystemTestUt
         try {
             fileSystem.getCommandRunner().execute( command );
         }
-        catch ( JSchException | IOException e ) {
+        catch ( IOException e ) {
             throw new RuntimeException( e );
         }
     }

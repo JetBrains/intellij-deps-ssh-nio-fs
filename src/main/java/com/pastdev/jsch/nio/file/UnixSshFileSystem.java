@@ -23,9 +23,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 
-import com.jcraft.jsch.JSchException;
-
-
 public class UnixSshFileSystem extends AbstractSshFileSystem {
     private UnixSshPath defaultDirectory;
     private UnixSshPath rootDirectory;
@@ -213,34 +210,24 @@ public class UnixSshFileSystem extends AbstractSshFileSystem {
         return new UserPrincipalLookupService() {
             @Override
             public UserPrincipal lookupPrincipalByName( String user ) throws IOException {
-                try {
-                    if ( getCommandRunner().execute( "id " + user ).getExitCode() == 0 ) {
-                        return new StandardUserPrincipal( user );
-                    }
-                    else {
-                        throw new UserPrincipalNotFoundException( user + " does not exist" );
-                    }
+                if ( getCommandRunner().execute( "id " + user ).getExitCode() == 0 ) {
+                    return new StandardUserPrincipal( user );
                 }
-                catch ( JSchException e ) {
-                    throw new IOException( e );
+                else {
+                    throw new UserPrincipalNotFoundException( user + " does not exist" );
                 }
             }
 
             @Override
             public GroupPrincipal lookupPrincipalByGroupName( String group ) throws IOException {
-                try {
-                    // I don't like this, but don't have a better way right
-                    // now...
-                    // Should be pretty safe in most instances
-                    if ( getCommandRunner().execute( "egrep -i \"^" + group + "\" /etc/group" ).getExitCode() == 0 ) {
-                        return new StandardGroupPrincipal( group );
-                    }
-                    else {
-                        throw new UserPrincipalNotFoundException( group + " does not exist" );
-                    }
+                // I don't like this, but don't have a better way right
+                // now...
+                // Should be pretty safe in most instances
+                if ( getCommandRunner().execute( "egrep -i \"^" + group + "\" /etc/group" ).getExitCode() == 0 ) {
+                    return new StandardGroupPrincipal( group );
                 }
-                catch ( JSchException e ) {
-                    throw new IOException( e );
+                else {
+                    throw new UserPrincipalNotFoundException( group + " does not exist" );
                 }
             }
         };
