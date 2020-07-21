@@ -101,4 +101,12 @@
       </plugin>
     </plugins>
   </build>
+
+  <distributionManagement>
+    <repository>
+      <id>bintray-jetbrains-intellij-third-party-dependencies</id>
+      <url>https://api.bintray.com/maven/jetbrains/intellij-third-party-dependencies/ssh-nio-fs/;publish=1</url>
+    </repository>
+  </distributionManagement>
+
 </project>
