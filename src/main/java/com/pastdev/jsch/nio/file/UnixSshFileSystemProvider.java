@@ -231,6 +231,7 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
     }
 
     private ExecuteResult execute( UnixSshPath path, String command ) throws IOException {
+        logger.debug("execute command {} path( {} )", command, path);
         return path.getFileSystem().getCommandRunner().execute(command);
     }
 
@@ -624,10 +625,17 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
 
     private Map<String, Object> statParse( String result, SupportedAttribute... attributes ) {
         String[] values = result.split( ASCII_UNIT_SEPARATOR );
-        Map<String, Object> map = new HashMap<String, Object>();
-        int index = 0;
-        for ( SupportedAttribute attribute : attributes ) {
-            map.put( attribute.name(), attribute.toObject( values[index++] ) );
+
+        // possibly it helps us to catch why this error occurs
+        if (values.length != attributes.length) {
+            logger.error("stat result: " + result + " | attrs = " + Arrays.toString(attributes));
+        }
+
+        final Map<String, Object> map = new HashMap<>();
+        final int count = Math.min(values.length, attributes.length);
+        for (int i = 0; i < count; i++) {
+            final SupportedAttribute attribute = attributes[i];
+            map.put( attribute.name(), attribute.toObject( values[i] ) );
         }
         return map;
     }
