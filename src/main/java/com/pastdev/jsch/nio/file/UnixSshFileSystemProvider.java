@@ -55,6 +55,7 @@ import com.pastdev.jsch.command.CommandRunner.ExecuteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.jetbrains.annotations.NotNull;
 
 public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
     private static Logger logger = LoggerFactory.getLogger( UnixSshFileSystemProvider.class );
@@ -505,7 +506,7 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
         return readAttributes( path, attributeList.toArray( new SupportedAttribute[attributeList.size()] ), linkOptions );
     }
 
-    private Map<String, Object> readAttributes( Path path, SupportedAttribute[] attributes, LinkOption... linkOptions ) throws IOException {
+    private @NotNull Map<String, Object> readAttributes( Path path, SupportedAttribute[] attributes, LinkOption... linkOptions ) throws IOException {
         UnixSshPath unixPath = checkPath( path ).toAbsolutePath();
         String command = statCommand( unixPath, attributes ) 
                 + " " + unixPath.toAbsolutePath().quotedString();
@@ -623,7 +624,7 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
         return commandBuilder.append( "\"" ).toString();
     }
 
-    private Map<String, Object> statParse( String result, SupportedAttribute... attributes ) {
+    private @NotNull Map<String, Object> statParse( String result, SupportedAttribute... attributes ) {
         String[] values = result.split( ASCII_UNIT_SEPARATOR );
 
         // possibly it helps us to catch why this error occurs
@@ -724,9 +725,9 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
     }
 
     private class BasicFileAttributesImpl implements BasicFileAttributes {
-        protected Map<String, Object> map;
+        protected final @NotNull Map<String, Object> map;
 
-        private BasicFileAttributesImpl( Map<String, Object> attributesMap ) {
+        private BasicFileAttributesImpl(@NotNull Map<String, Object> attributesMap ) {
             this.map = attributesMap;
         }
 
@@ -789,7 +790,7 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
     }
 
     private class PosixFileAttributesImpl extends BasicFileAttributesImpl implements PosixFileAttributes {
-        private PosixFileAttributesImpl( Map<String, Object> attributeMap ) {
+        private PosixFileAttributesImpl(@NotNull Map<String, Object> attributeMap ) {
             super( attributeMap );
         }
 
