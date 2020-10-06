@@ -52,13 +52,14 @@ import java.util.Set;
 
 import com.pastdev.jsch.command.CommandRunner.ChannelExecWrapper;
 import com.pastdev.jsch.command.CommandRunner.ExecuteResult;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.jetbrains.annotations.NotNull;
 
 public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
-    private static Logger logger = LoggerFactory.getLogger( UnixSshFileSystemProvider.class );
+    private static final Logger logger = LoggerFactory.getLogger( UnixSshFileSystemProvider.class );
     private static final String ASCII_UNIT_SEPARATOR = Character.toString( (char)31 );
     private static final SupportedAttribute[] BASIC_SUPPORTED_ATTRIBUTES = new SupportedAttribute[] {
             SupportedAttribute.creationTime,
@@ -510,7 +511,7 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
         UnixSshPath unixPath = checkPath( path ).toAbsolutePath();
         String command = statCommand( unixPath, attributes ) 
                 + " " + unixPath.toAbsolutePath().quotedString();
-        String result = null;
+        final String result;
         try {
             result = executeForStdout( unixPath, command );
         }
@@ -624,8 +625,17 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
         return commandBuilder.append( "\"" ).toString();
     }
 
-    private @NotNull Map<String, Object> statParse( String result, SupportedAttribute... attributes ) {
-        String[] values = result.split( ASCII_UNIT_SEPARATOR );
+    private @NotNull Map<String, Object> statParse(@Nullable String result, @NotNull SupportedAttribute... attributes)
+            throws IOException {
+        if (result == null || result.isEmpty()) {
+            throw new IOException("Parsing stat output: result is empty");
+        }
+
+        final String[] values = result.split( ASCII_UNIT_SEPARATOR );
+
+        if (values.length <= 1) {
+            throw new IOException("Parsing stat output: cannot split result");
+        }
 
         // possibly it helps us to catch why this error occurs
         if (values.length != attributes.length) {
