@@ -608,7 +608,7 @@ public class UnixSshFileSystemProvider extends AbstractSshFileSystemProvider {
             case GNU:
             default:
                 commandBuilder = new StringBuilder( path.getFileSystem().getCommand( "stat" ) )
-                        .append( " --printf \"" );
+                        .append( " -c \"" );
                 break;
         }
 
