@@ -9,7 +9,7 @@
 
   <groupId>org.jetbrains.intellij.deps</groupId>
   <artifactId>ssh-nio-fs</artifactId>
-  <version>1.0.20-SNAPSHOT</version>
+  <version>1.0.21-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>JSch NIO FileSystem Implementation</name>
