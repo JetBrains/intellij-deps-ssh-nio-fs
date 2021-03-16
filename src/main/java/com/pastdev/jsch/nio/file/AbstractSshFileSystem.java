@@ -79,6 +79,9 @@ public abstract class AbstractSshFileSystem extends FileSystem {
             switch ( execute.getStdout().trim().toLowerCase() ) {
                 case "darwin":
                 case "freebsd":
+                case "openbsd":
+                case "dragonfly":
+                case "netbsd":
                     defaultVariant = Variant.BSD;
                     break;
                 default:
